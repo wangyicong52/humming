@@ -351,6 +351,7 @@ def _set_w4a8_config(config: dict, block_m: int, shape_k: int = 0) -> None:
         block_shape=(block_m, 128, 128),
         warp_shape=(block_m, 16, 128),
         num_stages=4 if block_m >= 160 or (block_m >= 128 and shape_k > 2048) else 5,
+        num_ctas_per_sm=1,
         use_warp_spec=True,
         use_stream_k=False,
         use_packed_k_layout=True,
