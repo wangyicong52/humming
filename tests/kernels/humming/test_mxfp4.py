@@ -6,7 +6,7 @@ import torch
 from humming import dtypes
 from humming.config import ComputeConfig, GemmType, LayerConfig, MmaType
 from humming.schema.compressed_tensors import CompressedTensorsInputSchema
-from humming.schema.humming import HummingWeightSchema
+from humming.schema.humming import HummingInputSchema, HummingWeightSchema
 from humming.testing import (
     KernelTestCase,
     KernelTestRunner,
@@ -204,3 +204,26 @@ def test_mxfp4_input_schema_compatibility(checkpoint_format, group_size):
     ).to_humming_schema(torch.bfloat16)
     assert inputs.input_scale_dtype is None
     assert inputs.is_compatible_with(weight, torch.bfloat16) == (group_size == INPUT_GROUP_SIZE)
+
+
+@pytest.mark.parametrize(
+    "scale_dtype,expected",
+    [
+        (dtypes.float32, True),
+        (dtypes.float8e8m0, False),
+        (None, False),
+    ],
+)
+def test_int8_mxfp4_input_schema_compatibility(scale_dtype, expected):
+    skip_if_unsupported(a_dtype=dtypes.int8, mma_type="wgmma")
+    weight = HummingWeightSchema(
+        b_dtype=dtypes.float4e2m1,
+        bs_dtype=dtypes.float8e8m0,
+        weight_scale_group_size=WEIGHT_GROUP_SIZE,
+    )
+    inputs = HummingInputSchema(
+        a_dtype=dtypes.int8,
+        input_scale_group_size=INPUT_GROUP_SIZE,
+        input_scale_dtype=scale_dtype,
+    )
+    assert inputs.is_compatible_with(weight, torch.bfloat16) is expected
