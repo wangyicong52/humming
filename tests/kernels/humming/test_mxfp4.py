@@ -1,8 +1,11 @@
 """MXFP4 W4A8 coverage with grouped FP8 inputs."""
 
+from types import SimpleNamespace
+
 import pytest
 import torch
 
+import humming.schema.humming as humming_schema
 from humming import dtypes
 from humming.config import ComputeConfig, GemmType, LayerConfig, MmaType
 from humming.schema.compressed_tensors import CompressedTensorsInputSchema
@@ -207,23 +210,40 @@ def test_mxfp4_input_schema_compatibility(checkpoint_format, group_size):
 
 
 @pytest.mark.parametrize(
-    "scale_dtype,expected",
+    "sm_version,a_dtype,group_size,scale_dtype,expected",
     [
-        (dtypes.float32, True),
-        (dtypes.float8e8m0, False),
-        (None, False),
+        (90, dtypes.int8, 128, dtypes.float32, True),
+        (90, dtypes.int8, 128, dtypes.float8e8m0, False),
+        (90, dtypes.int8, 128, None, False),
+        (90, dtypes.int8, 64, dtypes.float32, False),
+        (89, dtypes.int8, 128, dtypes.float32, False),
+        (120, dtypes.int8, 128, dtypes.float32, False),
+        (90, dtypes.float8e4m3, 128, None, True),
+        (90, dtypes.float8e4m3, 128, dtypes.float32, True),
+        (90, dtypes.float8e4m3, 128, dtypes.float8e8m0, True),
     ],
 )
-def test_int8_mxfp4_input_schema_compatibility(scale_dtype, expected):
-    skip_if_unsupported(a_dtype=dtypes.int8, mma_type="wgmma")
+def test_mxfp4_input_schema_architecture_matrix(
+    monkeypatch,
+    sm_version,
+    a_dtype,
+    group_size,
+    scale_dtype,
+    expected,
+):
+    monkeypatch.setattr(
+        humming_schema,
+        "current_device",
+        SimpleNamespace(sm_version=sm_version),
+    )
     weight = HummingWeightSchema(
         b_dtype=dtypes.float4e2m1,
         bs_dtype=dtypes.float8e8m0,
         weight_scale_group_size=WEIGHT_GROUP_SIZE,
     )
     inputs = HummingInputSchema(
-        a_dtype=dtypes.int8,
-        input_scale_group_size=INPUT_GROUP_SIZE,
+        a_dtype=a_dtype,
+        input_scale_group_size=group_size,
         input_scale_dtype=scale_dtype,
     )
     assert inputs.is_compatible_with(weight, torch.bfloat16) is expected

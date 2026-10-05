@@ -496,6 +496,14 @@ def is_humming_schema_compatible(
             or (a_dtype == dtypes.int8 and input_schema.input_scale_dtype == dtypes.float32)
         )
     )
+    if (
+        sm_version == 90
+        and a_dtype == dtypes.int8
+        and is_mxfp4_weight
+        and input_group_size > 0
+        and input_schema.input_scale_dtype != dtypes.float32
+    ):
+        return False
     if input_group_size > 0 and weight_group_size > 0:
         if input_group_size != weight_group_size and (not is_mxfp4_weight or sm_version >= 120):
             return False
