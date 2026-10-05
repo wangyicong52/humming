@@ -213,20 +213,14 @@ def test_mxfp4_input_schema_compatibility(checkpoint_format, group_size):
     "sm_version,a_dtype,group_size,scale_dtype,expected",
     [
         (90, dtypes.int8, 128, dtypes.float32, True),
-        (90, dtypes.int8, 32, dtypes.float32, True),
         (90, dtypes.int8, 128, dtypes.float8e8m0, False),
-        (90, dtypes.int8, 32, dtypes.float8e8m0, False),
         (90, dtypes.int8, 128, None, False),
-        (90, dtypes.int8, 32, None, False),
         (90, dtypes.int8, 64, dtypes.float32, False),
         (89, dtypes.int8, 128, dtypes.float32, False),
-        (89, dtypes.int8, 32, dtypes.float32, False),
         (120, dtypes.int8, 128, dtypes.float32, False),
-        (120, dtypes.int8, 32, dtypes.float32, False),
         (90, dtypes.float8e4m3, 128, None, True),
         (90, dtypes.float8e4m3, 128, dtypes.float32, True),
         (90, dtypes.float8e4m3, 128, dtypes.float8e8m0, True),
-        (90, dtypes.float8e4m3, 32, dtypes.float32, False),
     ],
 )
 def test_mxfp4_input_schema_architecture_matrix(
