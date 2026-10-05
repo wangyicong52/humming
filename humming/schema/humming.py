@@ -484,16 +484,20 @@ def is_humming_schema_compatible(
     has_sm90_wgmma_input_scales = (
         sm_version == 90
         and is_mxfp4_weight
-        and input_group_size == 128
         and (
             (
                 a_dtype == dtypes.float8e4m3
+                and input_group_size == 128
                 # On SM90, LayerConfig resolves an unspecified group-scale
                 # dtype to float32 for WGMMA. Do not encode that hardware
                 # choice in the checkpoint's compressed-tensors input schema.
                 and input_schema.input_scale_dtype in (None, dtypes.float32)
             )
-            or (a_dtype == dtypes.int8 and input_schema.input_scale_dtype == dtypes.float32)
+            or (
+                a_dtype == dtypes.int8
+                and input_group_size in (32, 128)
+                and input_schema.input_scale_dtype == dtypes.float32
+            )
         )
     )
     if (
