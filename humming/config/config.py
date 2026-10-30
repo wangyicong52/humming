@@ -531,6 +531,7 @@ class TuningConfig(BaseHummingConfig):
     warp_shape: tuple[int, int, int]
 
     use_stream_k: bool = True
+    stream_k_max_slices: int = 10
 
     wgmma_use_late_as: bool = False
     wgmma_split_issue_wait: bool = False
@@ -618,6 +619,8 @@ class TuningConfig(BaseHummingConfig):
                 self.smem_reuse_mode = SmemReuseMode.NONE
         self.smem_reuse_mode = SmemReuseMode(self.smem_reuse_mode)
         assert self.block_shape[0] <= 256
+        if type(self.stream_k_max_slices) is not int or not 2 <= self.stream_k_max_slices <= 10:
+            raise ValueError("stream_k_max_slices must be an integer between 2 and 10")
         for name in ("producer_stage_unroll", "consumer_stage_unroll"):
             value = getattr(self, name)
             if value is not None and (type(value) is not int or value < 1):

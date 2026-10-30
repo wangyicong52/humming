@@ -121,7 +121,11 @@ public:
 
       // A tile can start in the last iteration of a CTA's work interval.
       // Include that partial first slice when bounding the total slice count.
-      constexpr uint32_t kMaxSlices = 10;
+      // Selected Decode projections use at most three ordered BF16 slices.
+      // Preserve the upstream partition by default; the limit belongs to the
+      // compiled tuning configuration so graph capture uses the same contract.
+      constexpr uint32_t kMaxSlices = Ctx::TuningConfig::kStreamKMaxSlices;
+      static_assert(kMaxSlices >= 2 && kMaxSlices <= 10);
       constexpr uint32_t kMinSliceIters = CEIL_DIV(kStreamKBlocks - 1, kMaxSlices - 1);
       streamk_mnk_total_iters = MAX(streamk_mnk_total_iters, kMinSliceIters);
 
