@@ -567,9 +567,9 @@ def is_humming_schema_compatible(
         if has_e0m3_operand and (input_group_size or weight_group_size or 16) != 16:
             return False
 
-    is_fp8_gs128_mxfp4_gs32 = (
+    is_a8_gs128_mxfp4_gs32 = (
         sm_version == 90
-        and a_dtype == dtypes.float8e4m3
+        and a_dtype in (dtypes.float8e4m3, dtypes.int8)
         and is_mxfp4_weight
         and input_group_size == 128
         # On SM90, LayerConfig resolves an unspecified group-scale dtype to
@@ -581,7 +581,7 @@ def is_humming_schema_compatible(
         if input_group_size != weight_group_size:
             if not is_mxfp4_weight or sm_version >= 120:
                 return False
-            has_compatible_input_scale = input_schema.input_scale_dtype == bs_dtype or is_fp8_gs128_mxfp4_gs32
+            has_compatible_input_scale = input_schema.input_scale_dtype == bs_dtype or is_a8_gs128_mxfp4_gs32
             if a_dtype.num_bits == 8 and not has_compatible_input_scale:
                 return False
 
